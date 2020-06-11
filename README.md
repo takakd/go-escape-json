@@ -23,9 +23,14 @@ $ go run escapejson.go input-file-path output-file-path
 `-- testdata: test data.
 ```
 
+## License used
+
+* Social Preview Image is "Photo by Charles Deluvio on Unsplash"
+
 ## Support
 
 [@takakd](https://twitter.com/takakdkd)
+
 
 ## License
 
