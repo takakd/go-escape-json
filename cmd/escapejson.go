@@ -1,33 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
+	"strconv"
+	"strings"
 )
-
-//
-func convertJsonElement(data interface{}) interface{} {
-	switch v := data.(type) {
-	case map[string]interface{}:
-		for ik, iv := range v {
-			v[ik] = convertJsonElement(iv)
-		}
-		data = v
-	case []interface{}:
-		for ik, iv := range v {
-			v[ik] = convertJsonElement(iv)
-		}
-		data = v
-	case string:
-		v = fmt.Sprintf("%+q", v)
-		// Remove unnecessary double-quote
-		data = v[1 : len(v)-1]
-	default:
-	}
-	return data
-}
 
 //
 func main() {
@@ -50,20 +30,23 @@ func main() {
 		return
 	}
 
-	// Convert
-	var data interface{}
-	json.Unmarshal(jsonStr, &data)
-	convertedData := convertJsonElement(data)
+	// Unicode characters to Unicode escape sequences.
+	converted := strconv.QuoteToASCII(string(jsonStr))
 
-	// Pretty
-	indentedData, err := json.MarshalIndent(convertedData, "", "  ")
-	if err != nil {
-		fmt.Println("ERROR: failed to MarshalIndent.")
-		return
-	}
+	// Undo - return code
+	re := regexp.MustCompile(`([^\\])\\n`)
+	converted = string(re.ReplaceAll([]byte(converted), []byte("$1\n")))
 
-	// Output file
-	err = ioutil.WriteFile(outputPath, indentedData, 0644)
+	// Undo - return code in value
+	converted = strings.ReplaceAll(converted, `\\n`, `\n`)
+
+	// Undo - double quote
+	converted = strings.ReplaceAll(converted, `\"`, `"`)
+
+	// Remove unnecessary double quote
+	converted = converted[1 : len(converted)-1]
+
+	err = ioutil.WriteFile(outputPath, []byte(converted), 0644)
 	if err != nil {
 		fmt.Println("ERROR: failed to output.")
 	}
